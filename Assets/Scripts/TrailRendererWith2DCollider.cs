@@ -2,7 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class TrailRendererWith2DCollider : MonoBehaviour {
+public class TrailRendererWith2DCollider : MonoBehaviour
+{
 
     //************
     //
@@ -21,7 +22,6 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     public bool colliderEnabled = true;             //determines if the collider is enabled.  Changing this during runtime will have no effect.
     public bool pausing = false;                     //determines if the trail is pausing, i.e. neither creating nor destroying vertices
 
-    private Transform trans;                        //transform of the object this script is attached to                    
     private Mesh mesh;
     private new PolygonCollider2D collider;
 
@@ -38,16 +38,17 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     /// <summary>
     /// Changes the material of the trail during runtime.
     /// </summary>
-    public void ChangeTrailMaterial(Material material) {
+    public void ChangeTrailMaterial(Material material)
+    {
         trailMaterial = material;
-        //collider.renderer.material = material;
         collider.GetComponent<TrailRenderer>().material = material;
     }
 
     /// <summary>
     /// Changes if the collider is a trigger or not during runtime.
     /// </summary>
-    public void ChangeColliderTrigger(bool isTrigger) {
+    public void ChangeColliderTrigger(bool isTrigger)
+    {
         colliderIsTrigger = isTrigger;
         collider.isTrigger = isTrigger;
     }
@@ -55,7 +56,8 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     /// <summary>
     /// Changes if the collider is enabled or not during runtime.
     /// </summary>
-    public void ChangeColliderEnabled(bool enabled) {
+    public void ChangeColliderEnabled(bool enabled)
+    {
         colliderEnabled = enabled;
         collider.enabled = enabled;
     }
@@ -66,35 +68,43 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     //
     //************
 
-    private void Awake() {
+    private void Awake()
+    {
         //create an object and mesh for the trail
-        GameObject trail = new GameObject("Trail", new[] { typeof(TrailRenderer), typeof(MeshRenderer), typeof(MeshFilter), typeof(PolygonCollider2D) });
-        mesh = trail.GetComponent<MeshFilter>().mesh = new Mesh();
-        //trail.renderer.material = trailMaterial;
-        trail.GetComponent<TrailRenderer>().material = trailMaterial;
+        //GameObject trail = new GameObject("Trail", new[] { typeof(TrailRenderer), typeof(MeshRenderer), typeof(MeshFilter), typeof(PolygonCollider2D) });
+
+        _ = gameObject.AddComponent<TrailRenderer>();
+        _ = gameObject.AddComponent<MeshRenderer>();
+        _ = gameObject.AddComponent<MeshFilter>();
+        _ = gameObject.AddComponent<PolygonCollider2D>();
+
+        mesh = gameObject.GetComponent<MeshFilter>().mesh = new Mesh();
+        gameObject.GetComponent<TrailRenderer>().material = trailMaterial;
 
         //get and set the polygon collider on this trail.
-        collider = trail.GetComponent<PolygonCollider2D>();
+        collider = gameObject.GetComponent<PolygonCollider2D>();
         collider.isTrigger = colliderIsTrigger;
+        //collider.SetPath(0, null);
         //collider.SetPath(0, Vector2[] as null);
-
-        //get the transform of the object this script is attatched to
-        trans = base.transform;
 
         //set the first center position as the current position
         centerPositions = new LinkedList<Vector3>();
-        centerPositions.AddFirst(trans.position);
+        centerPositions.AddFirst(transform.position);
 
         leftVertices = new LinkedList<Vertex>();
         rightVertices = new LinkedList<Vertex>();
     }
 
-    private void Update() {
-        if (!pausing) {
+    private void Update()
+    {
+        if (!pausing)
+        {
             //set the mesh and adjust widths if vertices were added or removed
-            if (TryAddVertices() | TryRemoveVertices()) {
+            if (TryAddVertices() | TryRemoveVertices())
+            {
 
-                if (widthStart != widthEnd) {
+                if (widthStart != widthEnd)
+                {
                     SetVertexWidths();
                 }
 
@@ -113,25 +123,27 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     /// Adds new vertices if the object has moved more than 'vertexDistanceMin' from the most recent center position.
     /// If a pair of vertices has been added, this method returns true.
     /// </summary>
-    private bool TryAddVertices() {
+    private bool TryAddVertices()
+    {
         bool vertsAdded = false;
 
         //check if the current position is far enough away (> 'vertexDistanceMin') from the most recent position where two vertices were added
-        if ((centerPositions.First.Value - trans.position).sqrMagnitude > vertexDistanceMin * vertexDistanceMin) {
+        if ((centerPositions.First.Value - transform.position).sqrMagnitude > vertexDistanceMin * vertexDistanceMin)
+        {
             //calculate the normalized direction from the 1) most recent position of vertex creation to the 2) current position
-            Vector3 dirToCurrentPos = (trans.position - centerPositions.First.Value).normalized;
+            Vector3 dirToCurrentPos = (transform.position - centerPositions.First.Value).normalized;
 
             //calculate the positions of the left and right vertices --> they are perpendicular to 'dirToCurrentPos' and 'renderDirection'
             Vector3 cross = Vector3.Cross(renderDirection, dirToCurrentPos);
-            Vector3 leftPos = trans.position + (cross * -widthStart * 0.5f);
-            Vector3 rightPos = trans.position + (cross * widthStart * 0.5f);
+            Vector3 leftPos = transform.position + (cross * -widthStart * 0.5f);
+            Vector3 rightPos = transform.position + (cross * widthStart * 0.5f);
 
             //create two new vertices at the calculated positions
-            leftVertices.AddFirst(new Vertex(leftPos, trans.position, (leftPos - trans.position).normalized));
-            rightVertices.AddFirst(new Vertex(rightPos, trans.position, (rightPos - trans.position).normalized));
+            leftVertices.AddFirst(new Vertex(leftPos, transform.position, (leftPos - transform.position).normalized));
+            rightVertices.AddFirst(new Vertex(rightPos, transform.position, (rightPos - transform.position).normalized));
 
             //add the current position as the most recent center position
-            centerPositions.AddFirst(trans.position);
+            centerPositions.AddFirst(transform.position);
             vertsAdded = true;
         }
 
@@ -142,12 +154,14 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     /// Removes any pair of vertices (left + right) that have been alive longer than the specified lifespan.
     /// If a pair of vertices have been removed, this method returns true.
     /// </summary>
-    private bool TryRemoveVertices() {
+    private bool TryRemoveVertices()
+    {
         bool vertsRemoved = false;
         LinkedListNode<Vertex> leftVertNode = leftVertices.Last;
 
         //continue looking at the last left vertex 1) while one exists and 2) while the last left vertex is older than its lifeTime
-        while (leftVertNode != null && leftVertNode.Value.TimeAlive > lifeTime) {
+        while (leftVertNode != null && leftVertNode.Value.TimeAlive > lifeTime)
+        {
             //remove the left vertex from the collection
             leftVertices.RemoveLast();
             leftVertNode = leftVertices.Last;
@@ -166,7 +180,8 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     /// <summary>
     /// Recalculates the widths of the vertices based on the amount of time they have been alive.  
     /// </summary>
-    private void SetVertexWidths() {
+    private void SetVertexWidths()
+    {
         LinkedListNode<Vertex> leftVertNode = leftVertices.First;
         LinkedListNode<Vertex> rightVertNode = rightVertices.First;
 
@@ -174,12 +189,14 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
         float timeDelta = lifeTime - changeTime;
 
         //iterate through all the left and right vertex pairs
-        while (leftVertNode != null) {
+        while (leftVertNode != null)
+        {
             Vertex leftVert = leftVertNode.Value;
             Vertex rightVert = rightVertNode.Value;
 
             //if the alive time of this vertex pair is greater than the specified time to begin changing width
-            if (leftVert.TimeAlive > changeTime) {
+            if (leftVert.TimeAlive > changeTime)
+            {
                 //calculate the new width of the trail based on the amount of time the vertex has been alive
                 float width = widthStart - (widthDelta * ((leftVert.TimeAlive - changeTime) / timeDelta));
 
@@ -200,9 +217,11 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     /// <summary>
     /// Sets the mesh and the polygon collider of the mesh.
     /// </summary>
-    private void SetMesh() {
+    private void SetMesh()
+    {
         //only continue if there are at least two center positions in the collection
-        if (centerPositions.Count < 2) {
+        if (centerPositions.Count < 2)
+        {
             return;
         }
 
@@ -219,7 +238,8 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
         float timeDelta = leftVertices.Last.Value.TimeAlive - leftVertices.First.Value.TimeAlive;
 
         //iterate through all the pairs of vertices (left + right)
-        for (int i = 0; i < leftVertices.Count; ++i) {
+        for (int i = 0; i < leftVertices.Count; ++i)
+        {
             Vertex leftVert = leftVertNode.Value;
             Vertex rightVert = rightVertNode.Value;
 
@@ -238,7 +258,8 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
             uvs[vertIndex + 1] = new Vector2(uvValue, 1);
 
             //trail triangles
-            if (i > 0) {
+            if (i > 0)
+            {
                 int triIndex = (i - 1) * 6;
                 triangles[triIndex] = vertIndex - 2;
                 triangles[triIndex + 1] = vertIndex - 1;
@@ -258,9 +279,32 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
         mesh.uv = uvs;
         mesh.triangles = triangles;
 
-        if (colliderEnabled) {
+        if (colliderEnabled)
+        {
             collider.SetPath(0, colliderPath);
         }
+    }
+
+
+    // Trying to detect collision
+    private void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log("Collision");
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        Debug.Log("Collision");
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        Debug.Log("Collision");
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Debug.Log("Collision");
     }
 
     //************
@@ -269,19 +313,22 @@ public class TrailRendererWith2DCollider : MonoBehaviour {
     //
     //************
 
-    private class Vertex {
+    private class Vertex
+    {
         private Vector3 centerPosition; //the center position in the trail that this vertex was derived from
         private Vector3 derivedDirection; //the direction from the 1) center position to the 2) position of this vertex
-        private float creationTime;
+        private readonly float creationTime;
 
         public Vector3 Position { get; private set; }
         public float TimeAlive { get { return Time.time - creationTime; } }
 
-        public void AdjustWidth(float width) {
+        public void AdjustWidth(float width)
+        {
             Position = centerPosition + (derivedDirection * width);
         }
 
-        public Vertex(Vector3 position, Vector3 centerPosition, Vector3 derivedDirection) {
+        public Vertex(Vector3 position, Vector3 centerPosition, Vector3 derivedDirection)
+        {
             this.Position = position;
             this.centerPosition = centerPosition;
             this.derivedDirection = derivedDirection;

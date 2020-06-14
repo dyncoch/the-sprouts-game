@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DrawController : MonoBehaviour {
 
@@ -8,12 +6,18 @@ public class DrawController : MonoBehaviour {
     private GameObject drawPrefab;
 
     private GameObject theLine;
-    private GameObject[] allLines;
+
     private Plane plane;
     private Vector3 startPos;
 
     public Vector3 StartPos { get => startPos; set => startPos = value; }
     public Vector3 FinishPos { get; set; }
+    public GameObject[] AllLines { get; set; }
+
+    public DrawController(GameObject[] allLines)
+    {
+        AllLines = allLines;
+    }
 
     // Start is called before the first frame update
     void Start() {
@@ -41,8 +45,13 @@ public class DrawController : MonoBehaviour {
         }
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        Debug.Log("coooldslad");
+    }
+
     private bool CheckIfLinesIntersect(LineRenderer line1, LineRenderer line2) {
-        allLines = GameObject.FindGameObjectsWithTag("Line");
+        AllLines = GameObject.FindGameObjectsWithTag("Line");
 
         Vector3[] line1AllPoints = new Vector3[line1.positionCount];
         Vector3[] line2AllPoints = new Vector3[line2.positionCount];
